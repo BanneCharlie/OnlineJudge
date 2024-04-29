@@ -45,8 +45,6 @@ import static com.yupi.oj.service.impl.UserServiceImpl.SALT;
 /**
  * 用户接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @RestController
 @RequestMapping("/user")
@@ -75,10 +73,11 @@ public class UserController {
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        String userName = userRegisterRequest.getUserName();
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword,userName)) {
             return null;
         }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword);
+        long result = userService.userRegister(userAccount, userPassword, checkPassword,userName);
         return ResultUtils.success(result);
     }
 
@@ -198,6 +197,7 @@ public class UserController {
         return ResultUtils.success(b);
     }
 
+
     /**
      * 更新用户
      *
@@ -212,6 +212,9 @@ public class UserController {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 获取密码进行加密
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userUpdateRequest.getUserPassword()).getBytes());
+        userUpdateRequest.setUserPassword(encryptPassword);
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
         boolean result = userService.updateById(user);
